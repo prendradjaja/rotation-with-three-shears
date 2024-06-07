@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Shearing</title>
+    <style>
+        svg {
+            border: 1px solid black;
+            margin: 10px;
+        }
+        .pixel {
+            width: 1px;
+            height: 1px;
+        }
+    </style>
+</head>
+<body>
+    <svg id="canvas1" width="200" height="200"></svg>
+    <svg id="canvas2" width="200" height="200"></svg>
+    <script>
+        function generateSquare(sideLength, startX, startY, canvasId) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const canvas = document.getElementById(canvasId);
+
+            for (let y = 0; y < sideLength; y++) {
+                for (let x = 0; x < sideLength; x++) {
+                    const rect = document.createElementNS(svgNS, 'rect');
+                    rect.setAttribute('x', startX + x);
+                    rect.setAttribute('y', startY + y);
+                    rect.setAttribute('width', 1);
+                    rect.setAttribute('height', 1);
+
+                    if (x === 0 || x === sideLength - 1 || y === 0 || y === sideLength - 1) {
+                        rect.setAttribute('fill', 'black'); // Border color
+                    } else {
+                        rect.setAttribute('fill', '#ccc'); // Interior color
+                    }
+
+                    canvas.appendChild(rect);
+                }
+            }
+        }
+
+        function readOriginalPixels(canvasId, startX, startY) {
+            const originalPixels = [];
+            const canvasChildren = document.getElementById(canvasId).children;
+
+            for (let i = 0; i < canvasChildren.length; i++) {
+                const rect = canvasChildren[i];
+                const x = parseInt(rect.getAttribute('x')) - startX;
+                const y = parseInt(rect.getAttribute('y')) - startY;
+                originalPixels.push({ x, y, fill: rect.getAttribute('fill') });
+            }
+
+            return originalPixels;
+        }
+
+        function shearPixelsX(pixels, shearFactor) {
+            return pixels.map(pixel => ({
+                ...pixel,
+                x: Math.round(pixel.x + shearFactor * pixel.y)
+            }));
+        }
+
+        function shearPixelsY(pixels, shearFactor) {
+            return pixels.map(pixel => ({
+                ...pixel,
+                y: Math.round(pixel.y + shearFactor * pixel.x)
+            }));
+        }
+
+        function drawNewPixels(pixels, startX, startY, canvasId) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const canvas = document.getElementById(canvasId);
+
+            pixels.forEach(pixel => {
+                const rect = document.createElementNS(svgNS, 'rect');
+                rect.setAttribute('x', pixel.x + startX);
+                rect.setAttribute('y', pixel.y + startY);
+                rect.setAttribute('width', 1);
+                rect.setAttribute('height', 1);
+                rect.setAttribute('fill', pixel.fill);
+                canvas.appendChild(rect);
+            });
+        }
+
+        function shearSquare() {
+            const sideLength = 100;
+            const startX = 50;
+            const startY = 50;
+            const shearAngle = 30;
+            const shearFactor = Math.tan(shearAngle * Math.PI / 180);
+
+            const originalPixels = readOriginalPixels('canvas1', startX, startY);
+            let _ = originalPixels;
+
+            const angle = Math.PI / 16; // in radians
+
+            _ = shearPixelsX(_, -Math.tan(angle / 2));
+            _ = shearPixelsY(_, Math.sin(angle));
+            _ = shearPixelsX(_, -Math.tan(angle / 2));
+
+            const shearedPixels = _;
+            drawNewPixels(shearedPixels, startX, startY, 'canvas2');
+        }
+
+        // Generate the original square in the first canvas
+        generateSquare(100, 50, 50, 'canvas1');
+        shearSquare();
+    </script>
+</body>
+</html>
+
